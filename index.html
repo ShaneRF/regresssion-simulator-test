@@ -1,0 +1,110 @@
+<html><head><base href="https://chart.example.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSV to Chart Converter</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f0f0f0;
+    }
+    h1 {
+        color: #333;
+        text-align: center;
+    }
+    #fileInput {
+        display: none;
+    }
+    #uploadButton {
+        display: block;
+        width: 200px;
+        height: 50px;
+        margin: 20px auto;
+        background-color: #4CAF50;
+        color: white;
+        text-align: center;
+        line-height: 50px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+    #uploadButton:hover {
+        background-color: #45a049;
+    }
+    #chartContainer {
+        width: 100%;
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
+</style>
+</head>
+<body>
+    <h1>CSV to Chart Converter</h1>
+    <input type="file" id="fileInput" accept=".csv">
+    <label for="fileInput" id="uploadButton">Upload CSV File</label>
+    <div id="chartContainer">
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const chartContainer = document.getElementById('chartContainer');
+        let myChart;
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            Papa.parse(file, {
+                complete: function(results) {
+                    createChart(results.data);
+                }
+            });
+        });
+
+        function createChart(data) {
+            const labels = data[0].slice(1);
+            const datasets = data.slice(1).map((row, index) => ({
+                label: row[0],
+                data: row.slice(1),
+                backgroundColor: getRandomColor(),
+                borderColor: getRandomColor(),
+                borderWidth: 1
+            }));
+
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function getRandomColor() {
+            const r = Math.floor(Math.random() * 255);
+            const g = Math.floor(Math.random() * 255);
+            const b = Math.floor(Math.random() * 255);
+            return `rgba(${r}, ${g}, ${b}, 0.7)`;
+        }
+    </script>
+</body></html>
