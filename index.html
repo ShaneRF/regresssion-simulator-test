@@ -19,7 +19,7 @@
         z-index: 100;
         padding: 48px 0 0;
         box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-        background-color: #343a40;
+        background-color: #3f51b5;
     }
     .sidebar-sticky {
         position: relative;
@@ -30,19 +30,40 @@
         overflow-y: auto;
     }
     .navbar {
+        background-color: #fff;
         box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.15);
     }
     .card {
         box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.15);
+        border-radius: 0.5rem;
     }
     #plot {
         width: 100%;
         height: 500px;
     }
+    .nav-link {
+        color: rgba(255,255,255,.8);
+    }
+    .nav-link:hover {
+        color: #fff;
+    }
+    .navbar-brand {
+        color: #3f51b5;
+        font-weight: bold;
+    }
+    .form-range::-webkit-slider-thumb {
+        background: #3f51b5;
+    }
+    .form-range::-moz-range-thumb {
+        background: #3f51b5;
+    }
+    .form-range::-ms-thumb {
+        background: #3f51b5;
+    }
 </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
+    <nav class="navbar navbar-light sticky-top flex-md-nowrap p-0">
         <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">Linear Regression Dashboard</a>
         <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -51,13 +72,25 @@
 
     <div class="container-fluid">
         <div class="row">
-            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active text-white" href="#">
+                            <a class="nav-link active" href="#">
                                 <i class="fas fa-home me-2"></i>
                                 Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Analytics
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-cog me-2"></i>
+                                Settings
                             </a>
                         </li>
                     </ul>
@@ -101,6 +134,36 @@
                         </div>
                     </div>
                 </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Model Statistics</h5>
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>R-squared:</th>
+                                            <td id="r-squared">-</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Mean Squared Error:</th>
+                                            <td id="mse">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Regression Equation</h5>
+                                <p id="equation" class="lead">y = mx + b</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
@@ -118,6 +181,9 @@
             const aValue = document.getElementById('a-value');
             const cValue = document.getElementById('c-value');
             const nValue = document.getElementById('n-value');
+            const rSquared = document.getElementById('r-squared');
+            const mse = document.getElementById('mse');
+            const equation = document.getElementById('equation');
 
             async function updatePlot() {
                 const a = parseFloat(aSlider.value);
@@ -131,6 +197,7 @@
                 const code = `
 import numpy as np
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_squared_error
 
 def generate_data(a, c, n):
     x = np.linspace(-100, 100, n)
@@ -140,17 +207,20 @@ def generate_data(a, c, n):
 def perform_regression(x, y):
     model = LinearRegression()
     model.fit(x.reshape(-1, 1), y)
-    return model.coef_[0], model.intercept_
+    return model
 
 a, c, n = ${a}, ${c}, ${n}
 x, y = generate_data(a, c, n)
-slope, intercept = perform_regression(x, y)
+model = perform_regression(x, y)
+y_pred = model.predict(x.reshape(-1, 1))
 
 result = {
     'x': x.tolist(),
     'y': y.tolist(),
-    'slope': slope,
-    'intercept': intercept
+    'slope': model.coef_[0],
+    'intercept': model.intercept_,
+    'r2': r2_score(y, y_pred),
+    'mse': mean_squared_error(y, y_pred)
 }
 result
                 `;
@@ -188,6 +258,10 @@ result
                 };
 
                 Plotly.newPlot('plot', [trace1, trace2], layout);
+
+                rSquared.textContent = data.r2.toFixed(4);
+                mse.textContent = data.mse.toFixed(4);
+                equation.textContent = `y = ${data.slope.toFixed(2)}x + ${data.intercept.toFixed(2)}`;
             }
 
             aSlider.addEventListener('input', updatePlot);
